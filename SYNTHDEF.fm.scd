@@ -10,11 +10,27 @@ SynthDef(\fm7, {
 
 	envs = Array.fill(6, { |i|
 		EnvGen.kr(
-			Env.adsr(
-				((\attack++i).asSymbol).kr(0.01),
-				((\decay++i).asSymbol).kr(0.3),
-				((\sustain++i).asSymbol).kr(1),
-				((\release++i).asSymbol).kr(1)
+			Env.new(
+				[
+					// amplitudes
+					((\envlevel0++i).asSymbol).kr(0),
+					((\envlevel1++i).asSymbol).kr(1),
+					((\envlevel2++i).asSymbol).kr(0.5),
+					((\envlevel3++i).asSymbol).kr(0.3),
+					((\envlevel4++i).asSymbol).kr(0),
+				],[
+					// time to reach next level
+					((\envtime0++i).asSymbol).kr(0.01),
+					((\envtime1++i).asSymbol).kr(0.3),
+					((\envtime2++i).asSymbol).kr(1),
+					((\envtime3++i).asSymbol).kr(1),
+				],[
+					// \lin or \exp
+					((\envcurve0++i).asSymbol).kr(\lin),
+					((\envcurve1++i).asSymbol).kr(\lin),
+					((\envcurve2++i).asSymbol).kr(\lin),
+					((\envcurve3++i).asSymbol).kr(\lin),
+				]
 			),
 			gate);//((\gate++i).asSymbol).kr(0));
 	});
@@ -70,40 +86,40 @@ SynthDef(\fm7, {
 
 /*(
 SynthDef(\fm7, {
-	arg out=0, amp=0.3, mix = #[1,1,0,0,0,0], spread=0;
-    var sig, ctls, mods, chans, envs, freqs;
-	freqs = Array.fill(6, { |i|
-		((\freq++i).asSymbol).kr((i+1) * 100)
-	});
-	envs = Array.fill(6, { |i|
-		EnvGen.kr(
-			Env.adsr(
-				((\attack++i).asSymbol).kr(0.01),
-				((\decay++i).asSymbol).kr(0.3),
-				((\sustain++i).asSymbol).kr(1),
-				((\release++i).asSymbol).kr(1)
-			),
-			LFPulse.kr(((\envrate++i).asSymbol).kr))
-	});
-	// freq, phase (initialization only), amp
-	ctls = Array.fill(6, { |i| [freqs[i], 0, envs[i]] });
-	// FM7.ar(ctls, mods).slice(chans) * 0.3;//-12.dbamp; // using "slice" to select specific channels
-	sig = Splay.ar(FM7.ar(ctls, mods) * mix, spread);
-	Out.ar(out, sig * amp);
+arg out=0, amp=0.3, mix = #[1,1,0,0,0,0], spread=0;
+var sig, ctls, mods, chans, envs, freqs;
+freqs = Array.fill(6, { |i|
+((\freq++i).asSymbol).kr((i+1) * 100)
+});
+envs = Array.fill(6, { |i|
+EnvGen.kr(
+Env.adsr(
+((\attack++i).asSymbol).kr(0.01),
+((\decay++i).asSymbol).kr(0.3),
+((\sustain++i).asSymbol).kr(1),
+((\release++i).asSymbol).kr(1)
+),
+LFPulse.kr(((\envrate++i).asSymbol).kr))
+});
+// freq, phase (initialization only), amp
+ctls = Array.fill(6, { |i| [freqs[i], 0, envs[i]] });
+// FM7.ar(ctls, mods).slice(chans) * 0.3;//-12.dbamp; // using "slice" to select specific channels
+sig = Splay.ar(FM7.ar(ctls, mods) * mix, spread);
+Out.ar(out, sig * amp);
 }).store//add;
 )*/
 
 /*(
 a.set(\mods, [
-	// modulate ctls phases
-	// row: carrier
-	// column: modulator
-	[0, 2,2,2,0,0],
-	[0, 0,1,0,0,0],
-	[0, 0,0,0,0,0],
-	[0, 0,0,0,0,0],
-	[0, 0,0,0,0,0],
-	[0, 0,0,0,0,0]
+// modulate ctls phases
+// row: carrier
+// column: modulator
+[0, 2,2,2,0,0],
+[0, 0,1,0,0,0],
+[0, 0,0,0,0,0],
+[0, 0,0,0,0,0],
+[0, 0,0,0,0,0],
+[0, 0,0,0,0,0]
 ]
 )
 // set volume for each oscillator (what you want to hear)
