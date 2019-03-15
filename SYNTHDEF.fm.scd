@@ -70,6 +70,9 @@ Pbindef(\a, \amp, 1);
 	};
 	Pbindef(\a, (\amp++(i+1)).asSymbol, 1.0.rand);
 	Pbindef(\a, (\freq++(i+1)).asSymbol, ([0.25,0.5]++(1..8)).wchoose((0.2!4)++(0.02!6)).postln);
-	// Pbindef(\a, (\eglevel++(i+1)++"0").asSymbol, 1.0.rand);
+	Pbindef(\a, \attack, rrand(0.01, 0.2));
+	Pbindef(\a, \decay, rrand(0.01, 0.5));
+	Pbindef(\a, \sustainLevel, rrand(0.3, 0.95));
+	Pbindef(\a, \releaseTime, 1.0.rand);
 };
 )*/
