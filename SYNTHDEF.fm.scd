@@ -1,135 +1,75 @@
 (
 SynthDef(\fm7, {
-	arg out=0, amp=0.3, spread=0, freq=440, attack=0.01, decay=0.3, sustain=0.5, release=1, gate=1, algo=0, feedback;
-	var sig, env, ctls, mods, chans, envs, freqs, amps;
-	// frequencies of oscillators are in partials of main frequency, they
-	// multiply the base frequency
-	freqs = Array.fill(6, { |i|
-		freq * ((\freq++i).asSymbol).kr((i+1)) + 0.1.rand2;
-	});
+    var sig, env;
+    var freq = \freq.kr(440);
+    var amp = \amp.kr(1);
+    var spread = \spread.kr(0.8);
+    var out = \out.kr(0);
+    var amps = Array.fill(6, { |i| (\amp++(i+1)).asSymbol.kr(0)});
+    var ctls, mods;
 
-	envs = Array.fill(6, { |i|
-		EnvGen.kr(
-			Env.adsr(
-				((\attack++i).asSymbol).kr(0.01),
-				((\decay++i).asSymbol).kr(0.3),
-				((\sustain++i).asSymbol).kr(0.5),
-				((\release++i).asSymbol).kr(1)
-			),
-			// Uncomment this for custom envelopes (non-ADSR)
-			/*Env.new(
-				[
-					// amplitudes
-					((\envlevel0++i).asSymbol).kr(0),
-					((\envlevel1++i).asSymbol).kr(1),
-					((\envlevel2++i).asSymbol).kr(0.5),
-					((\envlevel3++i).asSymbol).kr(0.3),
-					((\envlevel4++i).asSymbol).kr(0),
-				],[
-					// time to reach next level
-					((\envtime0++i).asSymbol).kr(0.01),
-					((\envtime1++i).asSymbol).kr(0.3),
-					((\envtime2++i).asSymbol).kr(1),
-					((\envtime3++i).asSymbol).kr(1),
-				],[
-					// \lin or \exp
-					((\envcurve0++i).asSymbol).kr(\lin),
-					((\envcurve1++i).asSymbol).kr(\lin),
-					((\envcurve2++i).asSymbol).kr(\lin),
-					((\envcurve3++i).asSymbol).kr(\lin),
-				]
-			),*/
-			gate);//((\gate++i).asSymbol).kr(0));
-	});
+    ctls = Array.fill(6, { |i|
+        [freq * (\freq++(i+1)).asSymbol.kr(i+1), 0, 1];
+    });
 
-	// freq, phase (initialization only), amp
-	ctls = Array.fill(6, { |i| [freqs[i], 0, envs[i]] });
+    mods = Array.fill(6, { |i|
+        Array.fill(6, { |n| (\mod++(i+1)++(n+1)).asSymbol.kr(0)});
+    });
 
-	// mods modulate ctls phases
-	// Access them with x.set(\mod[carrier][modulator], value),
-	// For example: x.set(\mod01, 0.5) is modulating first oscilator with the signal from
-	// the second oscillator  by an amount of 0.5 radians
-	mods = Array.fill2D(6, 6, { |r, c|
-		((\mod++r++c).asSymbol).kr(0);
-	});
-	// mods = Array.fill(32, { |i| FM7.algoSpec(i, feedback)[0] }); // trying to choose algorithm
-
-	// use this instead if you prefer using a [6][6] array
-	//mods = \mods.kr(0!6!6);
-
-	amps = Array.fill(6, { |i|
-		((\amp++i).asSymbol).kr((i.mod(6)==0).asInt);
-	});
-
-	env = EnvGen.ar(Env.adsr(attack, decay, sustain, release), gate, doneAction:2);
-
-	sig = Splay.ar(FM7.ar(ctls, mods) * amps * env, spread);
-	Out.ar(out, sig * amp);
+    sig = FM7.ar(ctls, mods) * amps;
+    Out.ar(out, Splay.ar(sig * amp, spread));
 }).store;
 )
 
-// a = Synth(\fm7)
-// a.set(\freq0, 100)
-// a.set(\freq1, 400)
-// a.set(\freq2, 50)
-// // spread audible signals (0 is all centered, 1 is maximum spread)
-// a.set(\spread, 0)
-// // mix
-// a.set(\amp0, 1); // listen to first oscillator
-// a.set(\amp3, 0.5); // listen 4th oscillator at half volume
-// // envelopes for every oscillator
-// a.set(\envrate0, 0); // if set to 0 while hearing it, it will hold, otherwise it mutes
-// a.set(\envrate1, 0.21);
-// a.set(\envrate2, 0.211);
-// a.set(\attack1, 0.5)
-// a.set(\attack2, 0.5)
-// a.set(\release0, 1)
-// a.set(\release1, 0.5)
-// a.set(\release2, 0.05)
-// a.set(\decay0, 0.5)
-// a.set(\decay1, 0.1)
-// a.set(\decay2, 0.8)
-// a.free;
+(
+SynthDef(\fmx7, {
+    var amp = \amp.kr(1);
+    var spread = \spread.kr(0.8);
+    var out = \out.kr(0);
+	var gate = \gate.kr(1);
+    var freq = \freq.kr(440);
+	var env = EnvGen.ar(Env.adsr(\attackTime.kr(0.01), \decayTime.kr(0.3), \sustainLevel.kr(0.5), \releaseTime.kr(1)), gate, doneAction:2);
+    var amps = Array.fill(6, { |i| (\amp++(i+1)).asSymbol.kr(0)});
+    var freqs = Array.fill(6, { |i| (\freq++(i+1)).asSymbol.kr(i+1)});
 
+    var envs = Array.fill(6, { |i|
+		EnvGen.kr(
+			Env.new(
+				[0]++Array.fill(4, { |n| (\eglevel++(i+1)++(n+1)).asSymbol.kr(1) }),
+				Array.fill(4, { |n| (\egrate++(i+1)++(n+1)).asSymbol.kr(n/4) })
+			),
+			gate,
+			doneAction:2
+		);
+	});
 
-/*(
-SynthDef(\fm7, {
-arg out=0, amp=0.3, mix = #[1,1,0,0,0,0], spread=0;
-var sig, ctls, mods, chans, envs, freqs;
-freqs = Array.fill(6, { |i|
-((\freq++i).asSymbol).kr((i+1) * 100)
-});
-envs = Array.fill(6, { |i|
-EnvGen.kr(
-Env.adsr(
-((\attack++i).asSymbol).kr(0.01),
-((\decay++i).asSymbol).kr(0.3),
-((\sustain++i).asSymbol).kr(1),
-((\release++i).asSymbol).kr(1)
-),
-LFPulse.kr(((\envrate++i).asSymbol).kr))
-});
-// freq, phase (initialization only), amp
-ctls = Array.fill(6, { |i| [freqs[i], 0, envs[i]] });
-// FM7.ar(ctls, mods).slice(chans) * 0.3;//-12.dbamp; // using "slice" to select specific channels
-sig = Splay.ar(FM7.ar(ctls, mods) * mix, spread);
-Out.ar(out, sig * amp);
-}).store//add;
-)*/
+    var ctls = Array.fill(6, { |i|
+		[freq * freqs[i], 0, envs[i]];
+    });
 
-/*(
-a.set(\mods, [
-// modulate ctls phases
-// row: carrier
-// column: modulator
-[0, 2,2,2,0,0],
-[0, 0,1,0,0,0],
-[0, 0,0,0,0,0],
-[0, 0,0,0,0,0],
-[0, 0,0,0,0,0],
-[0, 0,0,0,0,0]
-]
+    var mods = Array.fill(6, { |i|
+        Array.fill(6, { |n| (\mod++(i+1)++(n+1)).asSymbol.kr(0)});
+    });
+
+    var sig = FM7.ar(ctls, mods) * amps;
+    Out.ar(out, Splay.ar(sig * amp * env, spread));
+}).store;
 )
-// set volume for each oscillator (what you want to hear)
-a.set(\mix, [1,1,0,0,0,0])
+
+// fmx7 Pbindef random EXAMPLE
+/*(
+Pbindef(\a, \instrument, \fmx7).play;
+Pbindef(\a, \amp, 1);
+6.do { |i|
+	6.do { |n|
+		Pbindef(\a, (\mod++(i+1)++(n+1)).asSymbol, 1.0.rand);
+	};
+	4.do { |n|
+		Pbindef(\a, (\egrate++(i+1)++(n+1)).asSymbol, rrand(0.0,0.25));
+		Pbindef(\a, (\eglevel++(i+1)++(n+1)).asSymbol, 1.0.rand);
+	};
+	Pbindef(\a, (\amp++(i+1)).asSymbol, 1.0.rand);
+	Pbindef(\a, (\freq++(i+1)).asSymbol, ([0.25,0.5]++(1..8)).wchoose((0.2!4)++(0.02!6)).postln);
+	// Pbindef(\a, (\eglevel++(i+1)++"0").asSymbol, 1.0.rand);
+};
 )*/
